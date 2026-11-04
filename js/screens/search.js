@@ -310,7 +310,7 @@
         description: 'People, requests, records and screens — everything this workspace may see, in one place.'
       }),
 
-      h('div', { className: 'palette__field', ref: boxRef, onKeyDown: onKey, style: { marginBottom: 16 } },
+      h('div', { className: 'spot__field-wrap', ref: boxRef, onKeyDown: onKey, style: { marginBottom: 16 } },
         h(V.SearchField, {
           placeholder: 'Search people, requests, documents, screens — or ask Ara',
           value: qSt[0], 'aria-label': 'Search everything',
@@ -318,22 +318,22 @@
         })),
 
       q && isQuestion(q) && !ansSt[0] && !busySt[0]
-        ? h('button', { type: 'button', className: 'palette__askrow', onClick: ask, style: { marginBottom: 16 } },
-            h('span', { className: 'palette__icon' }, ARA_GLYPH),
-            h('span', { className: 'palette__text' },
-              h('span', { className: 'palette__label' }, 'Ask Ara — “' + q + '”'),
-              h('span', { className: 'palette__context' }, 'Answers from this prototype only')),
-            h('span', { className: 'palette__path mono' }, 'Enter'))
+        ? h('button', { type: 'button', className: 'spot__ask', onClick: ask, style: { marginBottom: 16 } },
+            h('span', { className: 'spot__icon' }, ARA_GLYPH),
+            h('span', { className: 'spot__text' },
+              h('span', { className: 'spot__label' }, 'Ask Ara — “' + q + '”'),
+              h('span', { className: 'spot__context' }, 'Answers from this prototype only')),
+            h('span', { className: 'spot__path mono' }, 'Enter'))
         : null,
 
       busySt[0]
-        ? h('div', { className: 'palette__ara', style: { marginBottom: 16 } }, h(Ara, { size: 'md' }),
-            h('span', { className: 'palette__ara__b' }, h('span', { className: 'shimmer', style: { display: 'block', height: 11, width: '60%' } })))
+        ? h('div', { className: 'spot__ara', style: { marginBottom: 16 } }, h(Ara, { size: 'md' }),
+            h('span', { className: 'spot__ara__b' }, h('span', { className: 'shimmer', style: { display: 'block', height: 11, width: '60%' } })))
         : null,
 
       ansSt[0]
-        ? h('div', { className: 'palette__ara', style: { marginBottom: 16 } }, h(Ara, { size: 'md' }),
-            h('span', { className: 'palette__ara__b' },
+        ? h('div', { className: 'spot__ara', style: { marginBottom: 16 } }, h(Ara, { size: 'md' }),
+            h('span', { className: 'spot__ara__b' },
               h('p', null, ansSt[0].p),
               ansSt[0].l.length ? h('ul', null, ansSt[0].l.map(function (x, i) { return h('li', { key: i }, x); })) : null,
               ansSt[0].s ? h('small', null, ansSt[0].s) : null))
@@ -372,7 +372,7 @@
                         : h('span', { className: 'lrow__ico' }, I[g.src.icon] || I.file),
                       h('span', { className: 'lrow__m' }, h('strong', null, r.title), r.sub ? h('span', null, r.sub) : null),
                       r.chip ? h(V.Chip, { size: 'sm', shape: 'tag', variant: 'soft' }, r.chip) : null,
-                      r.mono ? h('span', { className: 'palette__path mono' }, r.mono) : null,
+                      r.mono ? h('span', { className: 'spot__path mono' }, r.mono) : null,
                       h('button', { type: 'button', className: 'lrow__go', 'aria-label': 'Open ' + r.title,
                         onClick: function () { open(g, rec); } }, I.right));
                   })),
@@ -388,14 +388,20 @@
   }
 
 
-  /* ------------------------------------------------------- The ⌘K overlay
+  /* ------------------------------------------------------- The ⌘K spotlight
      The quick way through: the same search, over whatever you are looking at, without
      leaving it. It runs the engine above rather than one of its own — a second
      implementation is how the palette and the screen would start giving different
      answers to the same query, which is the thing the screen was built to end.
 
      It is a shortcut, not a replacement: it shows the first few hits per source and
-     hands the rest to the screen, where the filtering and the full lists live. */
+     hands the rest to the screen, where the filtering and the full lists live.
+
+     Laid out as a spotlight: an input row, results under group headings, a chevron on
+     the active row and a footer that says which keys do what. With nothing typed it
+     offers "Go to" shortcuts for the role's sidebar pages. Ara sits at the bottom. */
+  var KEY_ESC = h('kbd', { className: 'spot__kbd' }, 'Esc');
+
   function Palette(p) {
     var role = store.pref('role');
     var qSt = React.useState('');
@@ -403,6 +409,7 @@
     var ansSt = React.useState(null);
     var busySt = React.useState(false);
     var boxRef = React.useRef(null);
+    var listRef = React.useRef(null);
 
     React.useEffect(function () {
       var t = setTimeout(function () {
@@ -414,35 +421,49 @@
 
     var q = qSt[0].trim();
 
-    /* Flattened to a single list, because arrow keys move through one list, not a grid. */
-    var rows = React.useMemo(function () {
-      if (!q) return [];
-      var out = [];
+    /* Results by source, flattened to one list of selectable items, because arrow keys
+       move through one list, not a grid. Each item remembers its group heading. */
+    var model = React.useMemo(function () {
+      var items = [];
+      if (!q) {
+        HRMS.nav.role(role).groups.forEach(function (g) {
+          g.items.forEach(function (it) {
+            items.push({ kind: 'goto', heading: 'Go to', icon: it.icon, title: it.label,
+              sub: g.label, to: role + '/' + it.path });
+          });
+        });
+        return { items: items, total: 0 };
+      }
+      var shown = 0;
       search(role, q, 3).forEach(function (g) {
-        g.hits.forEach(function (rec) { out.push({ group: g, rec: rec }); });
+        g.hits.forEach(function (rec) {
+          if (shown >= 12) return;
+          shown++;
+          var r = g.src.row(rec);
+          items.push({ kind: 'result', heading: g.src.label, group: g, rec: rec, avatar: r.avatar,
+            icon: g.src.icon, title: r.title, sub: r.sub || g.src.label });
+        });
       });
-      return out.slice(0, 12);
+      var total = search(role, q, 60).reduce(function (n, g) { return n + g.hits.length; }, 0);
+      if (total > shown) {
+        items.push({ kind: 'all', heading: null, icon: 'search', title: 'See all ' + total + ' results',
+          sub: 'Opens Search, where the filters are' });
+      }
+      return { items: items, total: total };
     }, [q, role]);
 
-    var total = React.useMemo(function () {
-      if (!q) return 0;
-      return search(role, q, 60).reduce(function (n, g) { return n + g.hits.length; }, 0);
-    }, [q, role]);
+    var items = model.items;
 
     React.useEffect(function () { selSt[1](0); ansSt[1](null); }, [q]);
+    React.useEffect(function () {
+      var el = listRef.current && listRef.current.querySelector('.is-on');
+      if (el && el.scrollIntoView) el.scrollIntoView({ block: 'nearest' });
+    }, [selSt[0], q]);
 
     function ask() {
-      if (!q) return;
+      if (!q) { var el = boxRef.current && boxRef.current.querySelector('input'); if (el) el.focus(); return; }
       busySt[1](true); ansSt[1](null);
       setTimeout(function () { busySt[1](false); ansSt[1](araAnswer(q)); }, 420);
-    }
-
-    function open(row) {
-      if (!row) return;
-      var path = (row.group.src.route && row.group.src.route(row.rec)) || first(row.group.src.to || {}, role);
-      if (!path) { ui.toast('That record has no screen in this prototype yet'); return; }
-      p.onClose();
-      router.goAs(path);
     }
 
     function seeAll() {
@@ -450,76 +471,93 @@
       router.go(role + '/search' + (q ? '?q=' + encodeURIComponent(q) : ''));
     }
 
+    function open(it) {
+      if (!it) return;
+      if (it.kind === 'all') { seeAll(); return; }
+      if (it.kind === 'goto') { p.onClose(); router.go(it.to); return; }
+      var src = it.group.src;
+      var path = (src.route && src.route(it.rec)) || first(src.to || {}, role);
+      if (!path) { ui.toast('That record has no screen in this prototype yet'); return; }
+      p.onClose();
+      router.goAs(path);
+    }
+
     function onKey(e) {
-      if (e.key === 'ArrowDown') { e.preventDefault(); selSt[1](Math.min(selSt[0] + 1, rows.length - 1)); }
+      if (e.key === 'ArrowDown') { e.preventDefault(); selSt[1](Math.min(selSt[0] + 1, items.length - 1)); }
       else if (e.key === 'ArrowUp') { e.preventDefault(); selSt[1](Math.max(selSt[0] - 1, 0)); }
       else if (e.key === 'Enter') {
         e.preventDefault();
-        if (isQuestion(q)) ask(); else if (rows.length) open(rows[selSt[0]]); else if (q) seeAll();
+        if (isQuestion(q)) ask();
+        else if (q && !model.total) seeAll();
+        else if (items.length) open(items[selSt[0]]);
       } else if (e.key === 'Escape') { e.preventDefault(); p.onClose(); }
     }
 
-    return h('div', { className: 'modal__scrim', onMouseDown: function (e) { if (e.target === e.currentTarget) p.onClose(); } },
-      h('div', { className: 'modal palette', role: 'dialog', 'aria-label': 'Search', onKeyDown: onKey },
-        h('div', { className: 'palette__field', ref: boxRef },
-          h(V.SearchField, {
+    /* Rows, with a heading wherever the group changes. */
+    var nodes = [], last = null;
+    items.forEach(function (it, i) {
+      if (it.heading !== last && it.heading) {
+        nodes.push(h('li', { key: 'h' + i, className: 'spot__group', role: 'presentation' }, it.heading));
+      }
+      last = it.heading;
+      var on = i === selSt[0];
+      nodes.push(h('li', { key: 'i' + i, role: 'presentation' },
+        h('button', {
+          type: 'button', role: 'option', 'aria-selected': on ? 'true' : 'false',
+          className: 'spot__item' + (on ? ' is-on' : ''),
+          onMouseEnter: function () { selSt[1](i); },
+          onClick: function () { open(it); }
+        },
+          it.avatar ? h(V.Avatar, { name: it.avatar, size: 'xs' })
+            : h('span', { className: 'spot__tile' }, I[it.icon] || I.right),
+          h('span', { className: 'spot__text' },
+            h('span', { className: 'spot__label' }, it.title),
+            h('span', { className: 'spot__context' }, it.sub)),
+          on ? h('span', { className: 'spot__chev' }, I.right) : null)));
+    });
+
+    var noHits = q && !model.total && !ansSt[0] && !busySt[0];
+
+    return h('div', { className: 'modal__scrim spot__scrim', onMouseDown: function (e) { if (e.target === e.currentTarget) p.onClose(); } },
+      h('div', { className: 'modal spot', role: 'dialog', 'aria-label': 'Search', onKeyDown: onKey },
+        h('div', { className: 'spot__input', ref: boxRef },
+          h('span', { className: 'spot__sico' }, I.search),
+          h('input', {
+            type: 'text', className: 'spot__field', value: qSt[0], autoComplete: 'off', spellCheck: false,
             placeholder: 'Search people, requests, documents, screens — or ask Ara',
-            value: qSt[0], 'aria-label': 'Search everything',
+            'aria-label': 'Search everything',
             onChange: function (e) { qSt[1](e.target.value); }
-          })),
+          }),
+          KEY_ESC),
 
-        busySt[0] ? h('div', { className: 'palette__ara' }, h(Ara, { size: 'md' }),
-          h('span', { className: 'palette__ara__b' }, h('span', { className: 'shimmer', style: { display: 'block', height: 11, width: '60%' } }))) : null,
+        h('div', { className: 'spot__body' },
+          busySt[0] ? h('div', { className: 'spot__ara' }, h(Ara, { size: 'md' }),
+            h('span', { className: 'spot__ara__b' }, h('span', { className: 'shimmer', style: { display: 'block', height: 11, width: '60%' } }))) : null,
 
-        ansSt[0] ? h('div', { className: 'palette__ara' }, h(Ara, { size: 'md' }),
-          h('span', { className: 'palette__ara__b' },
-            h('p', null, ansSt[0].p),
-            ansSt[0].l.length ? h('ul', null, ansSt[0].l.map(function (x, i) { return h('li', { key: i }, x); })) : null,
-            ansSt[0].s ? h('small', null, ansSt[0].s) : null)) : null,
+          ansSt[0] ? h('div', { className: 'spot__ara' }, h(Ara, { size: 'md' }),
+            h('span', { className: 'spot__ara__b' },
+              h('p', null, ansSt[0].p),
+              ansSt[0].l.length ? h('ul', null, ansSt[0].l.map(function (x, i) { return h('li', { key: i }, x); })) : null,
+              ansSt[0].s ? h('small', null, ansSt[0].s) : null)) : null,
 
-        q && isQuestion(q) && !ansSt[0] && !busySt[0]
-          ? h('button', { type: 'button', className: 'palette__askrow', onClick: ask },
-              h('span', { className: 'palette__icon' }, ARA_GLYPH),
-              h('span', { className: 'palette__text' },
-                h('span', { className: 'palette__label' }, 'Ask Ara — “' + q + '”'),
-                h('span', { className: 'palette__context' }, 'Answers from this prototype only')),
-              h('span', { className: 'palette__path mono' }, 'Enter'))
-          : null,
+          items.length ? h('ul', { className: 'spot__list', role: 'listbox', ref: listRef }, nodes) : null,
 
-        rows.length
-          ? h('ul', { className: 'palette__list' }, rows.map(function (row, i) {
-              var r = row.group.src.row(row.rec);
-              return h('li', { key: row.group.src.key + i },
-                h('button', {
-                  type: 'button', className: 'palette__item' + (i === selSt[0] ? ' is-on' : ''),
-                  onMouseEnter: function () { selSt[1](i); },
-                  onClick: function () { open(row); }
-                },
-                  r.avatar ? h(V.Avatar, { name: r.avatar, size: 'xs' })
-                    : h('span', { className: 'palette__icon' }, I[row.group.src.icon] || I.right),
-                  h('span', { className: 'palette__text' },
-                    h('span', { className: 'palette__label' }, r.title),
-                    h('span', { className: 'palette__context' }, r.sub || row.group.src.label)),
-                  h('span', { className: 'palette__path mono' }, r.mono || row.group.src.label)));
-            }))
-          : (q && !ansSt[0] && !busySt[0]
-              ? h('div', { style: { padding: '8px 0 16px' } },
-                  h(ui.Empty, { icon: I.search, title: 'Nothing matches “' + q + '”',
-                    body: 'Search only covers what this workspace may view.' }))
-              : null),
+          noHits ? h('div', { style: { padding: '8px 0 12px' } },
+            h(ui.Empty, { icon: I.search, title: 'Nothing matches “' + q + '”',
+              body: 'Press Enter to open Search. It only covers what this workspace may view.' })) : null,
 
-        q && total > rows.length
-          ? h('button', { type: 'button', className: 'palette__askrow', onClick: seeAll },
-              h('span', { className: 'palette__icon' }, I.search),
-              h('span', { className: 'palette__text' },
-                h('span', { className: 'palette__label' }, 'See all ' + total + ' results'),
-                h('span', { className: 'palette__context' }, 'Opens Search, where the filters are')),
-              h('span', { className: 'palette__path mono' }, '#/' + role + '/search'))
-          : null,
+          h('div', { className: 'spot__group' }, 'Ask Ara'),
+          h('button', { type: 'button', className: 'spot__ask', onClick: ask },
+            h('span', { className: 'spot__tile spot__tile--ara' }, ARA_GLYPH),
+            h('span', { className: 'spot__text' },
+              h('span', { className: 'spot__label' }, q ? 'Ask Ara — “' + q + '”' : 'Ask Ara a question'),
+              h('span', { className: 'spot__context' }, 'Answers from this prototype only')))),
 
-        h('div', { className: 'palette__foot muted' },
-          h('span', null, q ? total + ' result' + (total === 1 ? '' : 's') : HRMS.nav.count + ' screens'),
-          h('span', null, 'Enter to open · ask a question for Ara · Esc to close'))));
+        h('div', { className: 'spot__foot' },
+          h('span', { className: 'spot__keys' },
+            h('span', null, h('kbd', { className: 'spot__kbd' }, '↑'), h('kbd', { className: 'spot__kbd' }, '↓'), ' to move'),
+            h('span', null, h('kbd', { className: 'spot__kbd' }, '↵'), ' to open')),
+          h('span', null, q ? model.total + ' result' + (model.total === 1 ? '' : 's') : HRMS.nav.count + ' screens'))));
   }
 
   HRMS.screens.register({

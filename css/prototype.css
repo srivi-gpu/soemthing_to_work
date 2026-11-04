@@ -171,27 +171,48 @@
 /* ---------- Role banner shown on the dashboards ---------- */
 .rolebar { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; font-size: 13px; color: var(--text-secondary); }
 
-/* ---------- Command palette (Ctrl/Cmd K) ---------- */
-.palette { width: min(640px, 100%); padding: 12px; gap: 6px; }
-.palette__field { padding: 2px 2px 6px; }
-.palette__list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; max-height: 46vh; overflow-y: auto; }
-.palette__item {
-  display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 9px 10px;
-  border: 0; background: none; border-radius: var(--tl-radius-control); color: var(--text-primary); font: inherit; cursor: pointer;
+/* ---------- Search spotlight (Ctrl/Cmd K), Tracklivo style ---------- */
+.spot__scrim { align-items: flex-start; padding-top: 12vh; }
+.spot { width: min(640px, 100%); padding: 0; gap: 0; overflow: hidden; border-radius: 18px; }
+.spot__input { display: flex; align-items: center; gap: 12px; padding: 14px 18px; border-bottom: 1px solid var(--border-subtle); }
+.spot__sico { display: flex; color: var(--text-secondary); flex: none; }
+.spot__sico svg { width: 20px; height: 20px; }
+.spot__field { flex: 1; min-width: 0; border: 0; outline: 0; background: none; font: inherit; font-size: 16px; color: var(--text-primary); }
+.spot__field::placeholder { color: var(--text-muted); }
+.spot__kbd {
+  display: inline-grid; place-items: center; min-width: 22px; height: 22px; padding: 0 6px; margin-right: 4px;
+  border: 1px solid var(--border-default); border-bottom-width: 2px; border-radius: 6px;
+  background: var(--bg-subtle, var(--bg-hover)); color: var(--text-secondary); font: 500 11px/1 inherit; font-family: inherit;
 }
-.palette__item.is-on { background: var(--brand-soft); color: var(--text-brand); }
-.palette__icon { display: flex; color: var(--text-secondary); flex: none; }
-.palette__item.is-on .palette__icon { color: var(--text-brand); }
-.palette__text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-.palette__label { font-size: 14px; line-height: 1.35; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.palette__context { font-size: 11px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.palette__item.is-on .palette__context { color: var(--text-brand); opacity: .75; }
-.palette__path { font-size: 11px; color: var(--text-muted); flex: none; white-space: nowrap; }
-@media (max-width: 620px) { .palette__path { display: none; } }
-.palette__foot {
-  display: flex; justify-content: space-between; gap: 12px; padding: 10px 10px 4px;
-  border-top: 1px solid var(--border-subtle); font-size: 11px;
+.spot__input .spot__kbd { margin-right: 0; }
+.spot__body { padding: 8px; max-height: 56vh; overflow-y: auto; }
+.spot__list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.spot__group { padding: 10px 10px 6px; font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--text-muted); list-style: none; }
+.spot__item, .spot__ask {
+  all: unset; box-sizing: border-box; cursor: pointer; display: flex; align-items: center; gap: 12px; width: 100%;
+  padding: 8px 10px; border-radius: 12px; color: var(--text-primary);
 }
+.spot__item.is-on { background: var(--brand-soft); color: var(--text-brand); }
+.spot__ask:hover { background: var(--brand-softer); }
+.spot__item:focus-visible, .spot__ask:focus-visible { outline: 2px solid var(--brand-solid); outline-offset: -2px; }
+.spot__tile { display: grid; place-items: center; flex: none; width: 34px; height: 34px; border-radius: 10px;
+  background: var(--bg-subtle, var(--bg-hover)); color: var(--text-secondary); }
+.spot__tile svg { width: 18px; height: 18px; }
+.spot__item.is-on .spot__tile { background: var(--brand-solid); color: var(--brand-on-solid); }
+.spot__tile--ara { background: var(--brand-solid); color: var(--brand-on-solid); }
+.spot__text { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.spot__label { font-size: 14px; line-height: 1.35; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.spot__context { font-size: 12px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.spot__item.is-on .spot__context { color: var(--text-brand); opacity: .75; }
+.spot__chev { display: flex; flex: none; color: var(--text-brand); }
+.spot__chev svg { width: 16px; height: 16px; }
+.spot__path { font-size: 11px; color: var(--text-muted); flex: none; white-space: nowrap; }
+@media (max-width: 620px) { .spot__path { display: none; } .spot__scrim { padding-top: 6vh; } }
+.spot__foot {
+  display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 16px;
+  border-top: 1px solid var(--border-subtle); font-size: 12px; color: var(--text-muted);
+}
+.spot__keys { display: inline-flex; gap: 14px; align-items: center; }
 
 /* ---------- Bulleted lists inside cards ---------- */
 .bullets { margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 5px; font-size: 13px; color: var(--text-secondary); }
@@ -428,20 +449,20 @@
 
 }
 
-/* ---------- Ara in the command palette ---------- */
-.palette__askrow { all: unset; box-sizing: border-box; cursor: pointer; display: flex; align-items: center; gap: 11px;
+/* ---------- Ara answers (spotlight and Search screen) ---------- */
+.spot__askrow-screen { all: unset; box-sizing: border-box; cursor: pointer; display: flex; align-items: center; gap: 11px;
   width: 100%; padding: 10px 11px; border-radius: 12px; background: var(--brand-softer); border: 1px solid var(--brand-border); margin-bottom: 8px; }
-.palette__askrow:hover { background: var(--brand-soft); }
-.palette__askrow:focus-visible { outline: 2px solid var(--brand-solid); outline-offset: -2px; }
-.palette__askrow .palette__icon { background: var(--brand-solid); color: var(--brand-on-solid); border-radius: 9px;
+.spot__askrow-screen:hover { background: var(--brand-soft); }
+.spot__askrow-screen:focus-visible { outline: 2px solid var(--brand-solid); outline-offset: -2px; }
+.spot__ask .spot__icon { background: var(--brand-solid); color: var(--brand-on-solid); border-radius: 9px;
   width: 28px; height: 28px; display: grid; place-items: center; }
-.palette__askrow .palette__icon svg { width: 16px; height: 16px; }
-.palette__ara { display: flex; gap: 12px; padding: 13px 14px; margin-bottom: 8px; border-radius: 14px;
+.spot__ask .spot__icon svg { width: 16px; height: 16px; }
+.spot__ara { display: flex; gap: 12px; padding: 13px 14px; margin-bottom: 8px; border-radius: 14px;
   background: var(--brand-softer); border: 1px solid var(--brand-border); }
-.palette__ara__b { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
-.palette__ara__b p { font-size: 14px; line-height: 1.5; color: var(--text-primary); margin: 0; }
-.palette__ara__b ul { margin: 0; padding-left: 17px; font-size: 13.5px; line-height: 1.6; color: var(--text-primary); }
-.palette__ara__b small { font-size: 12px; color: var(--text-muted); }
+.spot__ara__b { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 5px; }
+.spot__ara__b p { font-size: 14px; line-height: 1.5; color: var(--text-primary); margin: 0; }
+.spot__ara__b ul { margin: 0; padding-left: 17px; font-size: 13.5px; line-height: 1.6; color: var(--text-primary); }
+.spot__ara__b small { font-size: 12px; color: var(--text-muted); }
 
 /* ---------- Sign in (option B) inside the app shell ----------
    The option-B page paints its own full-height wash, so the auth wrapper must not
