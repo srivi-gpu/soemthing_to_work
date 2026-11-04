@@ -452,11 +452,137 @@
       }));
   }
 
+  /* ---------- Fitting a table to its width instead of scrolling it sideways
+
+     A wide table used to solve itself with a horizontal scrollbar, which hides the
+     columns on the right behind a gesture nobody makes and breaks the page rhythm.
+     Instead the table measures the space it actually has and drops the columns that
+     do not fit, lowest priority and rightmost first. What it drops is not lost: a
+     details button on the row opens the full record, so every field stays reachable.
+
+     Two columns are never dropped — the first, which says which record the row is,
+     and `actions`, which is the only way to act on it. A column may raise its own
+     standing with `priority` (1 survives longest, 3 goes first) or state the width it
+     needs with `minWidth`; everything else is estimated from the kind of value it
+     holds, which is close enough to decide what fits. */
+  var DT_DETAIL_W = 52;
+
+  var DT_STATUS = /status|state$/i;
+
+  /* An actions cell is as wide as the controls in it, and those differ per screen:
+     one ghost "View" is not two filled buttons. Rather than reserve the worst case
+     everywhere, count what the cell actually renders for a real row. */
+  function countControls(node, out) {
+    if (!node || typeof node !== 'object') return out;
+    if (Array.isArray(node)) { node.forEach(function (n) { countControls(n, out); }); return out; }
+    if (node.type === V.IconButton) out.icons += 1;
+    else if (node.type === V.Button || node.type === 'button') out.buttons += 1;
+    if (node.props) countControls(node.props.children, out);
+    return out;
+  }
+  function actionsWidth(c, row) {
+    if (!c.cell || !row) return 124;
+    var n;
+    try { n = countControls(c.cell(row), { buttons: 0, icons: 0 }); }
+    catch (e) { return 124; }
+    var items = n.buttons + n.icons;
+    if (!items) return 96;
+    var w = 32 + n.buttons * 88 + n.icons * 40 + (items - 1) * 8;
+    return Math.max(96, Math.min(w, 320));
+  }
+
+  function colMinWidth(c, i, row) {
+    if (c.minWidth) return c.minWidth;
+    if (c.width && typeof c.width === 'number') return c.width;
+    if (c.key === 'actions') return actionsWidth(c, row);
+    if (c.numeric || c.align === 'right') return 88;
+    if (DT_STATUS.test(c.key)) return 148;
+    if (i === 0) return 132;
+    return 138;
+  }
+  /* A rigid column is one whose width is its content: buttons, a figure, a status
+     chip, or a width the screen asked for. The rest are prose and take the slack. */
+  function colRigid(c, i) {
+    return !!(c.minWidth || (c.width && typeof c.width === 'number') || c.key === 'actions'
+      || c.numeric || c.align === 'right' || DT_STATUS.test(c.key));
+  }
+  function colPinned(c, i) { return c.pin === true || i === 0 || c.key === 'actions'; }
+  /* Status is what a row is usually read for, so it gives way after the rest. */
+  function colPriority(c) { return c.priority || (DT_STATUS.test(c.key) ? 1 : 2); }
+
+  function fitColumns(cols, width, hasSelection, row) {
+    if (!width || !cols.length) return { shown: cols, hidden: [] };
+    var avail = width - (hasSelection ? 52 : 0) - 2;
+    var min = {}, total = 0;
+    cols.forEach(function (c, i) { min[c.key] = colMinWidth(c, i, row); total += min[c.key]; });
+    if (total <= avail) return { shown: cols, hidden: [] };
+
+    var order = cols.map(function (c, i) { return { c: c, i: i }; })
+      .filter(function (x) { return !colPinned(x.c, x.i); })
+      .sort(function (a, b) { return (colPriority(b.c) - colPriority(a.c)) || (b.i - a.i); });
+
+    var budget = avail - DT_DETAIL_W;
+    var drop = {};
+    for (var k = 0; k < order.length && total > budget; k++) {
+      drop[order[k].c.key] = true;
+      total -= min[order[k].c.key];
+    }
+    return {
+      shown: cols.filter(function (c) { return !drop[c.key]; }),
+      hidden: cols.filter(function (c) { return drop[c.key]; })
+    };
+  }
+
+  /* The table lays out on fixed widths, so what each column gets is decided here
+     rather than guessed from the longest cell: every column keeps the width its
+     content needs, and whatever is left over is shared among the prose columns. */
+  function sizeColumns(shown, avail, row) {
+    if (!avail || !shown.length) return shown;
+    var mins = shown.map(function (c, i) { return colMinWidth(c, i, row); });
+    var flex = shown.map(function (c, i) { return !colRigid(c, i); });
+    var takers = flex.filter(Boolean).length || shown.length;
+    var used = mins.reduce(function (n, w) { return n + w; }, 0);
+    var share = Math.max(0, Math.floor((avail - used) / takers));
+    return shown.map(function (c, i) {
+      var w = mins[i] + (flex[i] || takers === shown.length ? share : 0);
+      return Object.assign({}, c, { width: w });
+    });
+  }
+
+  /* The width the table has to work with, kept current as the window and the rail move. */
+  function useWidth() {
+    var ref = React.useRef(null);
+    var wSt = React.useState(0);
+    React.useLayoutEffect(function () {
+      var el = ref.current;
+      if (!el) return;
+      function read() { wSt[1](el.clientWidth); }
+      read();
+      if (typeof ResizeObserver === 'undefined') {
+        window.addEventListener('resize', read);
+        return function () { window.removeEventListener('resize', read); };
+      }
+      var ro = new ResizeObserver(read);
+      ro.observe(el);
+      return function () { ro.disconnect(); };
+    }, []);
+    return { ref: ref, width: wSt[0] };
+  }
+
+  function cellValue(c, row) {
+    if (c.cell) return c.cell(row);
+    var v = row[c.key];
+    return v == null || v === '' ? null : v;
+  }
+
   /* ---------- Table with search, filters, pagination and export ---------- */
   function DataTable(p) {
     var sizeSt = React.useState(p.pageSize || 10);
     var qSt = React.useState(''), pageSt = React.useState(1);
     var q = qSt[0].trim().toLowerCase();
+
+    var moreSt = React.useState(null);
+    var box = useWidth();
 
     var rows = p.rows;
     if (q && p.search) rows = rows.filter(function (r) { return String(p.search(r)).toLowerCase().indexOf(q) >= 0; });
@@ -487,7 +613,22 @@
     }
 
     var hasToolbar = p.search || p.filters || p.onExport !== false || p.toolbar;
-    return h(React.Fragment, null,
+    var fit = fitColumns(p.columns, box.width, !!p.selection, view[0]);
+    var avail = box.width - (p.selection ? 52 : 0) - 2;
+    var columns = fit.hidden.length
+      ? sizeColumns(fit.shown, avail - DT_DETAIL_W, view[0]).concat([{
+          key: '__more', header: '', align: 'right', width: DT_DETAIL_W,
+          cell: function (row) {
+            return h('button', {
+              type: 'button', className: 'dt__more', 'aria-label': 'Show the other details',
+              title: fit.hidden.map(function (c) { return c.header; }).filter(Boolean).join(', '),
+              onClick: function () { moreSt[1](row); }
+            }, I.dots || I.right);
+          }
+        }])
+      : sizeColumns(fit.shown, avail, view[0]);
+
+    return h('div', { className: 'dt', ref: box.ref },
       hasToolbar ? h('div', { className: 'filterbar' },
         p.search ? h('div', { className: 'filterbar__search' },
           h(V.SearchField, {
@@ -503,7 +644,7 @@
       rows.length
         ? h(React.Fragment, null,
             h(V.Table, {
-              columns: p.columns, rows: view, selection: p.selection, density: p.density,
+              columns: columns, rows: view, selection: p.selection, density: p.density,
               selected: p.selected, onSelectionChange: p.onSelectionChange,
               stickyHeader: p.stickyHeader, maxHeight: p.maxHeight, 'aria-label': p.label
             }),
@@ -518,7 +659,16 @@
             actions: q
               ? h(V.Button, { variant: 'outline', onClick: function () { qSt[1](''); } }, 'Clear search')
               : p.emptyActions
-          }));
+          }),
+
+      /* The columns that did not fit, for the row you asked about. */
+      moreSt[0] ? h(Drawer, {
+        title: p.detailTitle ? p.detailTitle(moreSt[0]) : (p.label || 'Details'),
+        eyebrow: p.label, description: 'The columns this screen is too narrow to show.',
+        onClose: function () { moreSt[1](null); }
+      }, h(KeyValue, {
+        rows: fit.hidden.map(function (c) { return [c.header || c.key, cellValue(c, moreSt[0])]; })
+      })) : null);
   }
 
   /* ---------- A standard distribution bar list ---------- */
