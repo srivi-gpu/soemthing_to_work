@@ -294,6 +294,119 @@
 .onode__n { flex: none; font-size: 12px; color: var(--text-muted); }
 @media (prefers-reduced-motion: reduce) { .onode__tw svg { transition: none; } }
 
+/* ---------- Billing and usage ----------
+   The admin console's one money screen. Everything here is numbers an admin checks
+   against an invoice, so figures are tabular-lined up and the units sit beside them in
+   the secondary colour rather than on a line of their own. */
+.bu-sub { font-size: 13px; color: var(--text-secondary); }
+.bu-num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.bu-label { font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--text-secondary); }
+
+/* the plan banner at the top of Billing */
+.bu-sub2 { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; padding: 16px 18px; border: 1px solid var(--border-subtle); border-radius: 16px; background: var(--bg-surface); }
+.bu-sub2__m { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; flex: none; border-radius: 13px; background: var(--brand-soft); color: var(--text-brand); }
+.bu-sub2__m svg { width: 22px; height: 22px; }
+.bu-sub2 strong { font-size: 16px; }
+.bu-sub2__p { font-size: 18px; font-weight: 600; white-space: nowrap; }
+.bu-sub2__p .bu-sub { font-size: 13px; font-weight: 400; }
+
+/* buying seats: the offer, the quantity, then what it costs */
+.bu-buy { display: flex; align-items: center; gap: 20px; flex-wrap: wrap; padding: 16px 18px; border-radius: 14px; background: var(--bg-subtle); }
+.bu-buy strong, .bu-buy__f strong { font-size: 15px; }
+.bu-buy__f { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+.bu-step { display: inline-flex; align-items: center; gap: 8px; flex: none; }
+.bu-step__b { all: unset; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; height: 40px; padding: 0 14px; border: 1px solid var(--border-default); border-radius: 12px; background: var(--bg-surface); font-family: var(--font-sans); font-size: 15px; font-weight: 600; color: var(--text-brand); white-space: nowrap; }
+.bu-step__b span { font-size: 13px; font-weight: 500; color: var(--text-secondary); }
+.bu-step__b:hover:not(:disabled) { border-color: var(--brand-solid); background: var(--brand-softer); }
+.bu-step__b:disabled { cursor: default; opacity: .45; }
+.bu-step__b:focus-visible { outline: 2px solid var(--brand-solid); outline-offset: 2px; }
+.bu-step__v { min-width: 104px; height: 40px; display: inline-flex; align-items: center; justify-content: center; padding: 0 12px; border: 1px solid var(--border-default); border-radius: 12px; background: var(--bg-surface); font-size: 17px; font-weight: 600; font-variant-numeric: tabular-nums; color: var(--text-primary); }
+
+/* saved cards */
+.bu-pay { display: flex; align-items: center; gap: 14px; padding: 13px 16px; border: 1px solid var(--border-subtle); border-radius: 14px; background: var(--bg-surface); }
+.bu-pay.is-def { border-color: var(--brand-border); background: var(--brand-softer); }
+.bu-pay strong { font-size: 15px; font-weight: 500; letter-spacing: .04em; }
+.bu-pay__b { display: inline-flex; align-items: center; justify-content: center; min-width: 62px; height: 30px; flex: none; padding: 0 9px; border: 1px solid var(--border-subtle); border-radius: 7px; background: var(--bg-surface); font-size: 10px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--text-secondary); }
+
+/* the invoice table: a grid rather than a <table> so a row can carry two lines */
+.bu-table { display: flex; flex-direction: column; }
+.bu-tr { display: grid; grid-template-columns: 110px minmax(0, 1fr) 160px 110px 80px 48px; gap: 16px; align-items: center; padding: 13px 0; border-bottom: 1px solid var(--border-subtle); font-size: 14px; }
+.bu-tr:last-child { border-bottom: 0; }
+.bu-tr > :nth-child(4) { text-align: right; }
+.bu-tr strong { font-size: 14px; font-weight: 500; }
+.bu-th { padding-top: 0; font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--text-secondary); }
+@media (max-width: 960px) { .bu-tr { grid-template-columns: 100px minmax(0, 1fr) 100px 44px; } .bu-tr > :nth-child(3), .bu-tr > :nth-child(5) { display: none; } }
+
+/* Usage: what the plan includes */
+.bu-allow { display: flex; flex-direction: column; }
+.bu-allow__r { display: grid; grid-template-columns: minmax(0, 1fr) minmax(140px, 1.3fr) 90px; gap: 20px; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--border-subtle); }
+.bu-allow__r:last-child { border-bottom: 0; }
+.bu-allow__r .bu-num { text-align: right; font-size: 14px; color: var(--text-secondary); }
+@media (max-width: 720px) { .bu-allow__r { grid-template-columns: minmax(0, 1fr) 80px; } .bu-allow__r > :nth-child(2) { display: none; } }
+
+/* the heading between the two halves of Usage */
+.bu-head { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-top: 4px; }
+.bu-head h2 { margin: 0; font: 400 24px/32px var(--font-flex); color: var(--text-primary); }
+.bu-head > :last-child { margin-left: auto; }
+
+/* the month's headline percentage and its category split */
+.bu-big { font: 300 56px/62px var(--font-flex); letter-spacing: -.02em; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+.bu-cats { display: flex; flex-direction: column; margin-top: 6px; }
+.bu-cat { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 11px 0; border-bottom: 1px solid var(--border-subtle); font-size: 14px; }
+.bu-cat > span:first-child { display: flex; align-items: flex-start; gap: 10px; min-width: 0; }
+.bu-cat--h { padding-top: 0; font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--text-secondary); }
+.bu-cat--t { border-bottom: 0; font-weight: 600; }
+.bu-dot { width: 9px; height: 9px; margin-top: 6px; flex: none; border-radius: 999px; }
+
+/* the trend chart */
+.bu-chart { display: flex; flex-direction: column; gap: 10px; }
+.bu-chart svg { width: 100%; height: auto; display: block; overflow: visible; }
+.bu-chart__ax { font-family: var(--font-sans); font-size: 11px; fill: var(--text-secondary); }
+.bu-chart__lim { font-family: var(--font-sans); font-size: 11px; font-weight: 600; fill: var(--danger-fg); }
+.bu-chart__k { display: flex; flex-wrap: wrap; gap: 16px; font-size: 12px; color: var(--text-secondary); }
+.bu-chart__k span { display: inline-flex; align-items: center; gap: 7px; }
+.bu-chart__k i { display: inline-block; width: 16px; height: 3px; border-radius: 2px; background: var(--brand-solid); }
+.bu-chart__k .k-dash { background: repeating-linear-gradient(90deg, var(--brand-solid) 0 5px, transparent 5px 9px); opacity: .6; }
+.bu-chart__k .k-lim { background: repeating-linear-gradient(90deg, var(--danger-fg) 0 5px, transparent 5px 9px); }
+.bu-foot { display: flex; align-items: center; gap: 12px; margin-top: auto; padding: 12px 14px; border-radius: 14px; background: var(--brand-softer); font-size: 13px; line-height: 1.5; color: var(--text-secondary); }
+
+/* the two Usage cards match height, and the chart takes what is left */
+.bu-grid { align-items: stretch; }
+.bu-card--even { height: 100%; }
+.bu-monthsel { min-width: 180px; }
+.bu-monthsel .vi-field__label { display: none; }
+
+/* buying credits: the tiers, the nudge to the next one, and the quote */
+.bu-buygrid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 26px; align-items: start; }
+.bu-tiers { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+.bu-tier { all: unset; cursor: pointer; display: flex; flex-direction: column; gap: 5px; align-items: flex-start; padding: 12px 14px; border: 1.5px solid var(--border-subtle); border-radius: 14px; background: var(--bg-surface); }
+.bu-tier:hover { border-color: var(--brand-border); }
+.bu-tier.is-on { border-color: var(--brand-solid); background: var(--brand-softer); }
+.bu-tier:focus-visible { outline: 2px solid var(--brand-solid); outline-offset: 2px; }
+.bu-tier strong { font-size: 15px; font-variant-numeric: tabular-nums; }
+.bu-hint { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 12px 14px; border-radius: 14px; background: var(--brand-softer); font-size: 13px; line-height: 1.5; color: var(--text-secondary); }
+.bu-quote { display: flex; flex-direction: column; padding: 14px 16px; border-radius: 14px; border: 1px solid var(--border-subtle); background: var(--bg-surface); }
+.bu-quote__r { display: flex; align-items: baseline; gap: 12px; padding: 7px 0; font-size: 14px; }
+.bu-quote__r.is-save { color: var(--success-fg); font-weight: 500; }
+.bu-quote__r--tot { margin-top: 6px; padding-top: 11px; border-top: 1px solid var(--border-subtle); font-size: 16px; font-weight: 600; }
+@media (max-width: 860px) { .bu-buygrid { grid-template-columns: 1fr; } }
+
+/* choosing a plan */
+.bu-plans { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.bu-plan { all: unset; cursor: pointer; display: flex; flex-direction: column; gap: 8px; align-items: flex-start; padding: 16px; border: 1.5px solid var(--border-subtle); border-radius: 16px; background: var(--bg-surface); }
+.bu-plan:hover { border-color: var(--brand-border); }
+.bu-plan.is-on { border-color: var(--brand-solid); background: var(--brand-softer); }
+.bu-plan:focus-visible { outline: 2px solid var(--brand-solid); outline-offset: 2px; }
+.bu-plan__h { display: flex; align-items: center; gap: 8px; }
+.bu-plan__h strong { font-size: 16px; }
+.bu-plan__p { font-size: 20px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.bu-plan__p .bu-sub { font-size: 13px; font-weight: 400; }
+.bu-plan__c { font-size: 13px; font-weight: 600; color: var(--text-brand); }
+.bu-plan ul { margin: 4px 0 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 7px; }
+.bu-plan li { display: flex; gap: 8px; font-size: 13px; line-height: 1.45; color: var(--text-secondary); }
+.bu-plan li svg { width: 16px; height: 16px; flex: none; margin-top: 1px; color: var(--success-fg); }
+@media (max-width: 860px) { .bu-plans { grid-template-columns: 1fr; } }
+
 /* ---------- Integrations ---------- */
 .icards { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 14px; }
 .icard { display: flex; flex-direction: column; gap: 11px; padding: 16px; border-radius: 18px; border: 1px solid var(--border-subtle); background: var(--bg-surface); min-width: 0; }
@@ -303,8 +416,15 @@
 .icard__h strong { font-size: 15px; font-weight: 600; color: var(--text-primary); display: block; }
 .icard__h span { font-size: 12.5px; color: var(--text-secondary); }
 .icard p { font-size: 13px; line-height: 1.5; color: var(--text-secondary); }
-.icard__f { display: flex; align-items: center; gap: 8px; margin-top: auto; padding-top: 2px; }
-.icard__f .vi-btn { flex: none; }
+.icard__note { display: flex; gap: 8px; font-size: 12.5px; line-height: 1.45; color: var(--text-secondary); }
+.icard__note-i { flex: none; color: var(--warning-fg, #b26a00); }
+/* The footer is ruled off from the body so the connection state reads as a status
+   line rather than another paragraph of the description. */
+.icard__f { display: flex; align-items: center; gap: 8px; margin-top: auto; padding-top: 12px; border-top: 1px solid var(--border-subtle); }
+.icard__f .vi-btn { flex: none; margin-left: auto; }
+.icard__state { display: inline-flex; align-items: center; gap: 7px; min-width: 0; font-size: 12.5px; color: var(--text-secondary); }
+.icard__dot { flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--text-muted, #8a8a8a); }
+.icard__dot.is-on { background: var(--success-fg, #1a7f4b); }
 .isugg { display: flex; gap: 12px; padding: 14px 16px; border-radius: 18px; background: var(--brand-softer); border: 1px solid var(--brand-border); }
 .isugg__m { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
 .isugg__m strong { font-size: 14.5px; font-weight: 600; color: var(--text-primary); }

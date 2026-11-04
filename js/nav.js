@@ -62,22 +62,16 @@
       { path: 'approvals', label: 'Approval permissions', section: '10', note: 'Which roles may approve which request types.' }
     ]},
 
-    { path: 'billing', label: 'Subscription & billing', icon: 'card', section: '2.1', tabs: [
-      { path: 'plan', label: 'Current plan', section: '2.1', note: 'Plan, billing cycle, renewal date and included entitlements.' },
-      { path: 'seats', label: 'Seat limits', section: '2.1', note: 'Employee seat limit against seats consumed, with overage warnings.' },
-      { path: 'history', label: 'Billing history', section: '2.1', note: 'Past charges, credits and refunds.' },
-      { path: 'invoices', label: 'Invoices', section: '11.2', note: 'Downloadable invoices with line items and tax breakdown.' },
-      { path: 'methods', label: 'Payment methods', section: '2.1', note: 'Saved cards and bank mandates, with the primary method flagged.' },
-      { path: 'change', label: 'Change plan', section: '2.1', note: 'Upgrade or downgrade, with a proration preview before confirming.' }
-    ]},
-
-    { path: 'ai', label: 'AI management', icon: 'leo', section: '2.1', tabs: [
-      { path: 'dashboard', label: 'Usage dashboard', section: '2.1', note: 'Credits available against credits consumed, and the trend over time.' },
-      { path: 'credits', label: 'Credits', section: '2.1', note: 'Credit balance, top-ups and expiry.' },
-      { path: 'by-module', label: 'By module', section: '2.1', note: 'Which modules consume AI credits.' },
-      { path: 'by-user', label: 'By user', section: '2.1', note: 'Per-user consumption, to spot outliers.' },
-      { path: 'features', label: 'Feature configuration', section: '2.1', note: 'Turn individual AI features on or off per module.' },
-      { path: 'limits', label: 'Usage limits', section: '2.1', note: 'Caps per user, per module and per billing period.' }
+    /* Two tabs, not eleven. Billing used to carry six (plan, seats, history, invoices,
+       methods, change) and AI management another six beside it, which split one
+       question — what are we paying for, and what are we using — across two modules
+       and a dozen clicks. Billing is what you pay and what you pay it with; Usage is
+       what the AI credits in that plan have been spent on. */
+    { path: 'billing', label: 'Billing and usage', icon: 'card', section: '2.1', tabs: [
+      { path: 'billing', label: 'Billing', icon: 'card', section: '2.1',
+        note: 'Plan and renewal, seats, payment methods, invoice details and past invoices.' },
+      { path: 'usage', label: 'Usage', icon: 'bolt', section: '2.1',
+        note: 'What the plan includes, what the AI credits went on, and the trend against the monthly limit.' }
     ]},
 
     /* No tabs: the module is one page, and the providers are grouped into sections on
@@ -427,8 +421,7 @@
     { label: 'Administration', slots: [
       { label: 'Users', icon: 'users', path: 'users' },
       { label: 'Roles & permissions', icon: 'shield', path: 'roles' },
-      { label: 'Subscription & billing', icon: 'card', path: 'billing' },
-      { label: 'AI management', icon: 'leo', path: 'ai' },
+      { label: 'Billing and usage', icon: 'card', path: 'billing' },
       { label: 'Integrations', icon: 'plug', path: 'integrations' },
       { label: 'Audit logs', icon: 'history', path: 'audit' }
     ]},
