@@ -1221,12 +1221,13 @@
     };
   });
 
-  /* Integrations. Two providers for now: Microsoft Outlook for mail and calendar,
-     and Tracklivo for time and attendance.
+  /* Integrations. Three providers for now, and the screen is a plain grid of cards
+     rather than tabs or sections: one page, one look, nothing to click through before
+     you can see what is connected.
 
-     `section` is what groups the cards on the Admin screen — the module used to split
-     these across six tabs, which meant six clicks to see what was connected and no
-     place where the whole picture read at once. Sections put them on one page.
+     `scope` is the regions line under the name, `connectedOn` the date the footer
+     shows when a provider is connected, and `note` an optional caution the card prints
+     above its footer.
 
      `fields` drives the configuration form a card opens, so adding a provider later is
      a data change rather than a screen change. */
@@ -1235,8 +1236,10 @@
       id: 'int-outlook',
       name: 'Microsoft Outlook',
       provider: 'Microsoft 365',
-      section: 'Email & calendar',
+      scope: 'India · GCC · Global',
+      kind: 'Mail and calendar',
       status: 'Connected',
+      connectedOn: '2026-10-12',
       detail: 'notifications@nexoratech.com',
       summary: 'Sends HRMS notifications from your Microsoft 365 tenant, and writes approved leave, '
         + 'holidays and interview invitations to employee calendars.',
@@ -1250,7 +1253,7 @@
           hint: 'Every notification the HRMS sends comes from here.' },
         { id: 'calendar', kind: 'select', label: 'Write leave to', value: 'employee',
           options: [
-            { value: 'employee', label: 'The employee\u2019s own calendar' },
+            { value: 'employee', label: 'The employee’s own calendar' },
             { value: 'shared', label: 'A shared HR calendar' },
             { value: 'both', label: 'Both' }
           ] },
@@ -1262,18 +1265,20 @@
       id: 'int-tracklivo',
       name: 'Tracklivo',
       provider: 'Tracklivo',
-      section: 'Time & attendance',
+      scope: 'India · GCC',
+      kind: 'Project management',
       status: 'Connected',
+      connectedOn: '2026-09-28',
       detail: '3 sites · synced every 15 minutes',
-      summary: 'Pulls punches and worked hours from Tracklivo into attendance, so regularisation '
-        + 'and payroll read the same numbers the floor does.',
+      summary: 'Project and task management for delivery teams. Pulls projects, assignments and '
+        + 'worked hours into the HRMS so timesheets and payroll read the same numbers.',
       logo: { text: 'T', bg: '#efeafd', fg: '#5733c1' },
-      capabilities: ['Punch and worked-hours sync', 'Shift rosters', 'Overtime hours into payroll'],
+      capabilities: ['Projects and task assignments', 'Worked-hours sync', 'Overtime hours into payroll'],
       lastSync: '2026-11-04T05:30:00',
       fields: [
         { id: 'workspace', kind: 'text', label: 'Tracklivo workspace', value: 'nexoratech',
-          hint: 'The workspace these sites report into.' },
-        { id: 'key', kind: 'text', label: 'API key', value: 'tl_live_4f21\u2026c90a', secret: true,
+          hint: 'The workspace these projects report into.' },
+        { id: 'key', kind: 'text', label: 'API key', value: 'tl_live_4f21…c90a', secret: true,
           hint: 'Rotated from Tracklivo. Only the last four characters are shown.' },
         { id: 'every', kind: 'select', label: 'Sync every', value: '15',
           options: [
@@ -1283,6 +1288,36 @@
           ] },
         { id: 'overtime', kind: 'switch', label: 'Send approved overtime to payroll', value: true },
         { id: 'auto', kind: 'switch', label: 'Raise a regularisation when a punch is missing', value: false }
+      ]
+    },
+    {
+      id: 'int-access',
+      name: 'Biometric & access card',
+      provider: 'Device gateway',
+      scope: 'India · GCC',
+      kind: 'Attendance devices',
+      status: 'Not connected',
+      connectedOn: null,
+      detail: 'Fingerprint, face and RFID readers',
+      summary: 'Reads punches from fingerprint, face and access-card readers at your sites, so '
+        + 'attendance and regularisation follow the door rather than a manual entry.',
+      note: 'Needs a reachable device gateway on each site network.',
+      logo: { text: 'B', bg: '#eafaf1', fg: '#0f7b53' },
+      capabilities: ['Fingerprint and face punches', 'Access-card swipes', 'Door-level entry and exit'],
+      lastSync: null,
+      fields: [
+        { id: 'gateway', kind: 'text', label: 'Gateway address', value: '',
+          hint: 'Host and port of the on-site device gateway, e.g. 10.4.2.18:9100.' },
+        { id: 'token', kind: 'text', label: 'Device token', value: '', secret: true,
+          hint: 'Issued by the gateway. Pairs the readers with this tenant.' },
+        { id: 'mode', kind: 'select', label: 'Record punches from', value: 'both',
+          options: [
+            { value: 'bio', label: 'Biometric readers only' },
+            { value: 'card', label: 'Access cards only' },
+            { value: 'both', label: 'Biometric readers and access cards' }
+          ] },
+        { id: 'doors', kind: 'switch', label: 'Treat the first swipe of the day as clock-in', value: true },
+        { id: 'missing', kind: 'switch', label: 'Raise a regularisation when an exit swipe is missing', value: true }
       ]
     }
   ];

@@ -303,8 +303,15 @@
 .icard__h strong { font-size: 15px; font-weight: 600; color: var(--text-primary); display: block; }
 .icard__h span { font-size: 12.5px; color: var(--text-secondary); }
 .icard p { font-size: 13px; line-height: 1.5; color: var(--text-secondary); }
-.icard__f { display: flex; align-items: center; gap: 8px; margin-top: auto; padding-top: 2px; }
-.icard__f .vi-btn { flex: none; }
+.icard__note { display: flex; gap: 8px; font-size: 12.5px; line-height: 1.45; color: var(--text-secondary); }
+.icard__note-i { flex: none; color: var(--warning-fg, #b26a00); }
+/* The footer is ruled off from the body so the connection state reads as a status
+   line rather than another paragraph of the description. */
+.icard__f { display: flex; align-items: center; gap: 8px; margin-top: auto; padding-top: 12px; border-top: 1px solid var(--border-subtle); }
+.icard__f .vi-btn { flex: none; margin-left: auto; }
+.icard__state { display: inline-flex; align-items: center; gap: 7px; min-width: 0; font-size: 12.5px; color: var(--text-secondary); }
+.icard__dot { flex: none; width: 7px; height: 7px; border-radius: 50%; background: var(--text-muted, #8a8a8a); }
+.icard__dot.is-on { background: var(--success-fg, #1a7f4b); }
 .isugg { display: flex; gap: 12px; padding: 14px 16px; border-radius: 18px; background: var(--brand-softer); border: 1px solid var(--brand-border); }
 .isugg__m { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 4px; }
 .isugg__m strong { font-size: 14.5px; font-weight: 600; color: var(--text-primary); }

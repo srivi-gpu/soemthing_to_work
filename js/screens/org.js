@@ -636,23 +636,16 @@
 
   /* ========================================================= Integrations
 
-     One page, grouped into sections, replacing the six tabs this module used to carry.
-     The tabs split the providers by subject — email, calendar, SSO, third-party, API,
-     webhooks — which meant that "what is connected, and is any of it broken" took six
-     clicks and was never answerable in one look. Sections put the same grouping on a
-     single page, so the whole picture reads at once and a section is a heading rather
-     than a destination.
+     One page and one flat grid of cards. This module used to carry six tabs, then
+     section headings; both made you click or scan before you could answer "what is
+     connected". With three providers there is nothing to group — the grid is the
+     whole picture, and each card is self-contained.
 
      The cards are the design system's integration card (.icards/.icard), so this module
      looks like the rest of the admin console rather than a list of rows.
 
      A card opens its own configuration form. The fields come from the seed record, so
      adding a provider is a data change and this screen does not grow a branch for it. */
-
-  function lastSyncLabel(x) {
-    if (!x.lastSync) return null;
-    return 'Last sync ' + ui.relTime(x.lastSync);
-  }
 
   /* The configuration form a card opens. Fields are declared in the seed record. */
   function IntegrationForm(p) {
@@ -707,11 +700,15 @@
       }));
   }
 
-  /* One provider, as the design system's integration card. */
+  /* One provider, as the design system's integration card: logo, name, the regions it
+     covers, what it does, an optional caution, and a footer that carries the connection
+     state on the left and the way in on the right. No chips and no second button — the
+     card says what this is and opens its settings, and everything else lives in there. */
   function IntegrationCard(p) {
     var x = p.integration;
     var connected = x.status === 'Connected';
-    var sync = lastSyncLabel(x);
+
+    function open() { p.onConfigure(x); }
 
     return h('div', { className: 'icard' },
       h('div', { className: 'icard__h' },
@@ -721,49 +718,30 @@
         }, x.logo.text),
         h('span', { style: { minWidth: 0 } },
           h('strong', null, x.name),
-          h('span', null, x.detail)),
-        h('span', { style: { marginLeft: 'auto', flex: 'none' } },
-          h(ui.StatusChip, { status: x.status }))),
+          h('span', null, x.scope))),
 
       h('p', null, x.summary),
 
-      h('div', { className: 'row gap-2 wrap' }, x.capabilities.map(function (c) {
-        return h(V.Chip, { key: c, size: 'sm', shape: 'tag' }, c);
-      })),
-
-      /* The sync line sits on its own row rather than in the footer: squeezed in beside
-         two buttons on a 290px card it wrapped one word per line. */
-      sync ? h('span', { className: 'muted', style: { fontSize: 12 } }, sync) : null,
+      x.note ? h('div', { className: 'icard__note' },
+        h('span', { className: 'icard__note-i', 'aria-hidden': 'true' }, '⚠'),
+        h('span', null, x.note)) : null,
 
       h('div', { className: 'icard__f' },
-        h(V.Button, {
-          variant: connected ? 'outline' : 'primary', className: 'vi-btn--sm',
-          iconStart: connected ? I.sliders : I.plug,
-          onClick: function () { p.onConfigure(x); }
-        }, connected ? 'Configure' : 'Connect'),
-        connected ? h(V.Button, {
-          variant: 'ghost', className: 'vi-btn--sm',
-          onClick: function () {
-            store.log('ran a test for the ' + x.name + ' integration', 'Configuration');
-            ui.toast(x.name + ' test connection succeeded', 'success');
-          }
-        }, 'Test connection') : null));
+        h('span', { className: 'icard__state' },
+          h('span', {
+            className: 'icard__dot' + (connected ? ' is-on' : ''), 'aria-hidden': 'true'
+          }),
+          connected
+            ? 'Connected · ' + ui.dateLabel(x.connectedOn)
+            : 'Not connected'),
+        connected
+          ? h(V.Button, { variant: 'ghost', className: 'vi-btn--sm icard__view', onClick: open }, 'View')
+          : h(V.Button, { variant: 'outline', className: 'vi-btn--sm icard__view', onClick: open }, 'View')));
   }
 
   function Integrations() {
     var cfgSt = React.useState(null);
     var rows = store.collection('integrations');
-
-    /* Sections come from the data and keep its order, so a new provider in a new
-       section appears without this screen being told about it. */
-    var sections = [];
-    rows.forEach(function (x) {
-      var at = null;
-      sections.forEach(function (s) { if (s.name === x.section) at = s; });
-      if (!at) { at = { name: x.section, items: [] }; sections.push(at); }
-      at.items.push(x);
-    });
-
     var connected = rows.filter(function (x) { return x.status === 'Connected'; }).length;
 
     return h(React.Fragment, null,
@@ -772,15 +750,12 @@
         description: connected + ' of ' + rows.length + ' connected. Each card opens its own settings.'
       }),
 
-      sections.map(function (s) {
-        return h(ui.FormSection, { key: s.name, title: s.name },
-          h('div', { className: 'icards' }, s.items.map(function (x) {
-            return h(IntegrationCard, {
-              key: x.id, integration: x,
-              onConfigure: function (it) { cfgSt[1](it); }
-            });
-          })));
-      }),
+      h('div', { className: 'icards' }, rows.map(function (x) {
+        return h(IntegrationCard, {
+          key: x.id, integration: x,
+          onConfigure: function (it) { cfgSt[1](it); }
+        });
+      })),
 
       rows.length ? null : h(ui.Empty, { icon: I.plug, title: 'No integrations available yet' }),
 
