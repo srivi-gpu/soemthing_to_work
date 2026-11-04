@@ -176,7 +176,15 @@
     function row(tabs, variant, value, label) {
       return h(V.TabGroup, {
         variant: variant, divider: variant !== 'pill', 'aria-label': label, value: value,
-        items: tabs.map(function (t) { return { value: t.path, label: t.label }; }),
+        /* A tab may name an icon, which the module's nav entry declares. Most do not,
+           and a mixed row reads badly, so the icons are used only where every tab in
+           the row has one. */
+        items: (function () {
+          var all = tabs.every(function (t) { return !!t.icon; });
+          return tabs.map(function (t) {
+            return { value: t.path, label: t.label, icon: all ? I[t.icon] : null };
+          });
+        }()),
         onChange: function (v) { go(tabs.filter(function (t) { return t.path === v; })[0]); }
       });
     }

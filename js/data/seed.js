@@ -857,25 +857,16 @@
   });
 
   /* ------------------------------------------------------- Admin-side records */
-  var AI_USAGE = {
-    credits: 50000, used: 31480,
-    byModule: [
-      { module: 'Employee Records', credits: 8420 }, { module: 'Onboarding', credits: 6310 },
-      { module: 'Leave Management', credits: 5180 }, { module: 'Payroll', credits: 4620 },
-      { module: 'Performance', credits: 3540 }, { module: 'Engagement', credits: 2110 },
-      { module: 'Reports', credits: 1300 }
-    ]
-  };
   var SUBSCRIPTION = {
-    plan: 'Enterprise', seats: 300, seatsUsed: live.length, cycle: 'Annual',
-    renews: '2027-04-01', renewsLabel: '1 Apr 2027', amount: 2340000, currency: 'INR', status: 'Active'
+    plan: 'Enterprise', seats: 300, seatsUsed: live.length, cycle: 'Monthly',
+    renews: '2026-12-01', renewsLabel: '1 Dec 2026', amount: 234000, currency: 'INR', status: 'Active'
   };
   var SETUP_STEPS = [
     { label: 'Organization profile', done: true }, { label: 'Legal entity', done: true },
     { label: 'Locations & branches', done: true }, { label: 'Work week & holidays', done: true },
     { label: 'Departments & designations', done: true }, { label: 'Roles & permissions', done: true },
     { label: 'Leave & attendance policies', done: true }, { label: 'Payroll configuration', done: false },
-    { label: 'Integrations', done: false }, { label: 'AI usage limits', done: false }
+    { label: 'Integrations', done: false }, { label: 'Payment method', done: false }
   ];
   var AUDIT = [
     ['Rohit Khanna', 'raised the minimum password length to 12 characters', '2026-10-29T16:12', 'Security'],
@@ -987,7 +978,7 @@
     { id: 'n9', kind: 'Survey Invitation', title: 'Q4 engagement pulse is open', body: '6 questions · closes 14 Nov 2026', on: '2026-10-30T10:00', read: false, route: 'me/engagement/surveys', roles: ['me'] },
     { id: 'n10', kind: 'Performance Review', title: 'H2 FY2026 self-assessment opens 15 November', body: 'Closes 30 November', on: '2026-10-24T09:30', read: true, route: 'me/performance/self', roles: ['me'] },
     { id: 'n11', kind: 'Security Event', title: 'Password policy changed', body: 'Minimum length raised to 12 characters by Rohit Khanna', on: '2026-10-29T16:12', read: true, route: 'admin/audit/security', roles: ['admin'] },
-    { id: 'n12', kind: 'Subscription', title: 'Seat usage at ' + Math.round((live.length / SUBSCRIPTION.seats) * 100) + '%', body: live.length + ' of ' + SUBSCRIPTION.seats + ' seats used', on: '2026-10-28T09:00', read: true, route: 'admin/billing/seats', roles: ['admin'] },
+    { id: 'n12', kind: 'Subscription', title: 'Seat usage at ' + Math.round((live.length / SUBSCRIPTION.seats) * 100) + '%', body: live.length + ' of ' + SUBSCRIPTION.seats + ' seats used', on: '2026-10-28T09:00', read: true, route: 'admin/billing/billing', roles: ['admin'] },
     { id: 'n13', kind: 'Resignation Request', title: 'Aditya Ghosh has submitted a resignation', body: 'Awaiting HR decision', on: '2026-10-12T15:20', read: true, route: 'hr/offboarding/resignations', roles: ['hr'] }
   ];
 
@@ -1322,32 +1313,123 @@
     }
   ];
 
-  var INVOICES = [
-    { id: 'INV-2026-04', date: '2026-04-01', period: 'Apr 2026 – Mar 2027', amount: 2340000, tax: 421200, status: 'Paid' },
-    { id: 'INV-2025-04', date: '2025-04-01', period: 'Apr 2025 – Mar 2026', amount: 1980000, tax: 356400, status: 'Paid' },
-    { id: 'INV-2024-04', date: '2024-04-01', period: 'Apr 2024 – Mar 2025', amount: 1560000, tax: 280800, status: 'Paid' }
+  /* ------------------------------------------------- Billing and usage (PRD 2.1)
+
+     The subscription is per seat, per month, and the plan carries a monthly AI credit
+     allowance that resets with it. Those two facts are what the Billing and usage
+     screen is built on: seats you pay for against seats in use, and credits you are
+     given against credits you have spent.
+
+     Credits bought on top never expire and are only drawn on once the monthly
+     allowance runs out, which is why they are tracked separately from the allowance.
+
+     `creditMonths` is the usage history the Usage tab charts. Each month carries its
+     daily running total (for the trend), its split by category (for the breakdown)
+     and what, if anything, had to be bought when the allowance ran out. */
+
+  var BILLING_PLANS = [
+    { key: 'growth', name: 'Growth', price: 520, credits: 25000,
+      for: 'A single entity getting off spreadsheets',
+      has: ['Core HR, leave and attendance', 'Payroll for one entity', 'Email support'] },
+    { key: 'enterprise', name: 'Enterprise', price: 780, credits: 80000,
+      for: 'Several entities and a full HR function',
+      has: ['Everything in Growth', 'Performance and engagement', 'SSO and audit logs', 'Priority support'] },
+    { key: 'scale', name: 'Scale', price: 980, credits: 200000,
+      for: 'Multi-entity payroll and heavier automation',
+      has: ['Everything in Enterprise', 'Multi-entity payroll', 'Custom workflows', 'A dedicated success manager'] }
   ];
-  var PAYMENT_METHODS = [
-    { id: 'pm-1', kind: 'Corporate card', detail: 'HDFC Visa ending 4417', expiry: '08/2029', primary: true },
-    { id: 'pm-2', kind: 'Bank mandate', detail: 'ICICI Bank · NACH', expiry: null, primary: false }
+
+  var BILLING_CARDS = [
+    { id: 'c1', brand: 'Visa', last: '4417', exp: '08 / 29', name: 'Nexora Technologies Pvt Ltd', def: true },
+    { id: 'c2', brand: 'Mastercard', last: '7701', exp: '02 / 28', name: 'Rohit Khanna', def: false }
   ];
-  var PLANS = [
-    { id: 'pl-growth', name: 'Growth', seats: 100, price: 780000, features: ['Core HR', 'Leave & attendance', 'Payroll', 'Email support'] },
-    { id: 'pl-ent', name: 'Enterprise', seats: 300, price: 2340000, current: true, features: ['Everything in Growth', 'Performance & engagement', 'SSO & audit logs', 'AI assistant', 'Priority support'] },
-    { id: 'pl-scale', name: 'Scale', seats: 1000, price: 6900000, features: ['Everything in Enterprise', 'Multi-entity payroll', 'Custom workflows', 'Dedicated success manager'] }
+
+  var BILLING_PAYMENTS = [
+    { d: '02 Nov 2026', what: 'AI credits', note: '20,000 credit top-up', amt: 9000, how: 'Visa ••4417', st: 'Paid' },
+    { d: '01 Nov 2026', what: 'Subscription', note: 'Enterprise · 300 seats · Nov', amt: 234000, how: 'Visa ••4417', st: 'Paid' },
+    { d: '18 Oct 2026', what: 'Seats', note: '10 seats added · pro-rata to 31 Oct', amt: 3271, how: 'Visa ••4417', st: 'Paid' },
+    { d: '01 Oct 2026', what: 'Subscription', note: 'Enterprise · 290 seats · Oct', amt: 226200, how: 'Visa ••4417', st: 'Paid' },
+    { d: '24 Sep 2026', what: 'AI credits', note: '5,000 credit top-up', amt: 2400, how: 'Mastercard ••7701', st: 'Paid' }
   ];
-  var AI_FEATURES = [
-    { id: 'aif-1', name: 'Resume parsing', module: 'Onboarding', enabled: true, perUse: 12 },
-    { id: 'aif-2', name: 'Policy question answering', module: 'Documents', enabled: true, perUse: 4 },
-    { id: 'aif-3', name: 'Attendance anomaly detection', module: 'Attendance', enabled: true, perUse: 2 },
-    { id: 'aif-4', name: 'Appraisal summary drafting', module: 'Performance', enabled: true, perUse: 18 },
-    { id: 'aif-5', name: 'Survey theme extraction', module: 'Engagement', enabled: true, perUse: 22 },
-    { id: 'aif-6', name: 'Payroll variance explanation', module: 'Payroll', enabled: false, perUse: 9 },
-    { id: 'aif-7', name: 'Natural-language reports', module: 'Reports', enabled: false, perUse: 15 }
+
+  /* What the credits were spent on. The descriptions matter on the screen: "Resume
+     parsing" alone does not tell an admin why it cost 8,450 credits this month. */
+  var CREDIT_CATEGORIES = [
+    ['Resume parsing', 'Candidate CVs read into onboarding'],
+    ['Policy question answering', 'Questions people asked about leave and policy'],
+    ['Attendance anomaly detection', 'Punches checked against the roster'],
+    ['Appraisal summary drafting', 'Review notes turned into a first draft'],
+    ['Survey theme extraction', 'Open-ended engagement answers grouped']
   ];
-  var aiByUser = shuffle(live.filter(function (e) { return e.level >= 4; })).slice(0, 18).map(function (e, n) {
-    return { employee: e.id, credits: Math.round((2400 - n * 110) * (0.7 + r() * 0.6)) };
-  }).sort(function (a, b) { return b.credits - a.credits; });
+  var CREDIT_COLORS = ['#5733c1', '#2f7ae5', '#1f7a6e', '#c2741a', '#b4249e'];
+
+  /* A plausible daily shape for a past month: weekends light, everything scaled so the
+     days add up to the month's total. Seeded so the chart is the same on every load. */
+  function creditDays(n, total, seed) {
+    var a = [], s = seed, i;
+    for (i = 0; i < n; i++) {
+      s = (s * 9301 + 49297) % 233280;
+      var weekend = (i % 7 === 5 || i % 7 === 6) ? 0.25 : 1;
+      a.push(weekend * (0.6 + (s / 233280) * 0.8));
+    }
+    var sum = a.reduce(function (x, y) { return x + y; }, 0);
+    return a.map(function (v) { return Math.round((v / sum) * total / 5) * 5; });
+  }
+
+  var CREDIT_MONTHS = [
+    { k: 'November 2026', live: true, daily: [8120, 7640, 8310],
+      cats: [8450, 6120, 4380, 3220, 1900], extra: 0, spentOnTopups: 0 },
+    { k: 'October 2026', daily: creditDays(31, 88400, 31),
+      cats: [31200, 22400, 15600, 12300, 6900], extra: 12000, spentOnTopups: 5400 },
+    { k: 'September 2026', daily: creditDays(30, 61500, 7),
+      cats: [21800, 15600, 10900, 8700, 4500], extra: 0, spentOnTopups: 0 }
+  ];
+
+  /* The day the allowance ran out, read off the same daily series the trend chart
+     draws, so the sentence under the figure and the marker on the chart can never
+     name two different days. */
+  CREDIT_MONTHS.forEach(function (m) {
+    var limit = BILLING_PLANS.filter(function (p) { return p.key === 'enterprise'; })[0].credits;
+    var run = 0, day = null;
+    m.daily.forEach(function (n, i) {
+      run += n;
+      if (day === null && run >= limit) day = i + 1;
+    });
+    m.ranOut = m.live ? null : day;
+  });
+
+  /* Bought credits get cheaper per 1,000 the more you take at once. The Usage tab's buy
+     dialog reads these, so the tiers, the quote and the "add a little more and save"
+     nudge can never disagree with each other. */
+  var CREDIT_TIERS = [
+    { min: 1000, per: 500, save: 0 },
+    { min: 5000, per: 480, save: 4 },
+    { min: 20000, per: 450, save: 10 },
+    { min: 50000, per: 400, save: 20 }
+  ];
+
+  var BILLING = {
+    plan: 'enterprise', seats: 300, renews: '2026-12-01', renewsLabel: '1 Dec 2026',
+    perDay: 8023,
+    plans: BILLING_PLANS, cards: BILLING_CARDS, payments: BILLING_PAYMENTS,
+    months: CREDIT_MONTHS, categories: CREDIT_CATEGORIES, colors: CREDIT_COLORS,
+    tiers: CREDIT_TIERS
+  };
+
+  /* The admin dashboard shows one AI card, and it must agree with the Usage tab: same
+     allowance, same spend, same split. So it is derived here rather than written out
+     a second time. */
+  var AI_USAGE = (function () {
+    var plan = BILLING_PLANS.filter(function (p) { return p.key === BILLING.plan; })[0];
+    var liveMonth = CREDIT_MONTHS[0];
+    return {
+      credits: plan.credits,
+      used: liveMonth.cats.reduce(function (a, n) { return a + n; }, 0),
+      byModule: CREDIT_CATEGORIES.map(function (c, i) {
+        return { module: c[0], credits: liveMonth.cats[i] };
+      })
+    };
+  }());
 
   /* --------------------------------------------- Payroll inputs (PRD 4.33–4.38)
      The one-off amounts a cycle carries, which is most of what makes one month's
@@ -1489,8 +1571,7 @@
     announcementReactions: ANNOUNCEMENT_REACTIONS, announcementComments: ANNOUNCEMENT_COMMENTS,
     approvals: approvals, notifications: notifications, audit: AUDIT,
     birthdays: birthdays, anniversaries: anniversaries,
-    users: users, integrations: INTEGRATIONS, invoices: INVOICES, paymentMethods: PAYMENT_METHODS,
-    plans: PLANS, aiFeatures: AI_FEATURES, aiByUser: aiByUser,
+    users: users, integrations: INTEGRATIONS, billing: BILLING,
     aiUsage: AI_USAGE, subscription: SUBSCRIPTION, setupSteps: SETUP_STEPS,
     util: { iso: iso, pretty: pretty, addDays: addDays, breakdown: breakdown },
 
