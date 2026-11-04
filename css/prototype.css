@@ -1004,3 +1004,36 @@
   .pexc__i { grid-template-columns: minmax(0, 1fr) auto; }
   .pexc__w { display: none; }
 }
+
+/* ================================================= Tables that fit their width
+   No table scrolls sideways. `ui.DataTable` measures the room it has and drops the
+   columns that will not fit (see js/ui.js); these rules make sure nothing the table
+   still shows can push it wider than its container, and give the dropped-columns
+   button its shape. Long values end in an ellipsis rather than widening a column. */
+.dt { min-width: 0; }
+.dt .vi-table-wrap { overflow-x: hidden; }
+.dt .vi-table { table-layout: fixed; width: 100%; }
+.dt .vi-th, .dt .vi-td { overflow: hidden; }
+.dt .vi-th__label { overflow: hidden; text-overflow: ellipsis; }
+.dt .vi-cell { min-width: 0; }
+.dt .vi-cell__text { min-width: 0; }
+.dt .vi-cell__titlerow { min-width: 0; overflow: hidden; }
+.dt .vi-cell__title, .dt .vi-cell__sub { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* A cell that holds a person (or any composite) ends the text itself, so the cell
+   must let it shrink rather than cut it off at the column edge. */
+.dt .vi-cell__title > .person, .dt .vi-cell__title > * { max-width: 100%; }
+.dt .vi-td { white-space: nowrap; text-overflow: ellipsis; }
+.dt .vi-td .vi-cell__chips, .dt .vi-td .vi-cell__actions { flex-wrap: nowrap; }
+
+/* The row's own "everything else" button, shown only when columns were dropped. */
+.dt__more {
+  display: inline-grid; place-items: center; width: 30px; height: 30px; padding: 0;
+  border: 1px solid var(--border-default); border-radius: var(--tl-radius-control, 8px);
+  background: var(--bg-surface); color: var(--text-secondary); cursor: pointer;
+}
+.dt__more:hover { background: var(--bg-hover); color: var(--text-primary); border-color: var(--border-strong); }
+.dt__more:focus-visible { outline: 2px solid var(--brand-solid); outline-offset: 2px; }
+.dt__more svg { width: 16px; height: 16px; }
+
+/* Tab rows wrap onto a second line instead of scrolling sideways. */
+.vi-tabs { flex-wrap: wrap; overflow-x: visible; }
