@@ -3,6 +3,8 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [main]
+  # Preview: Actions tab > Deploy to GitHub Pages > Run workflow > pick any branch.
+  # Note: Pages has one site, so a preview replaces the live site until main redeploys.
   workflow_dispatch:
 
 # Needed so the workflow can enable Pages and publish to it.
