@@ -196,7 +196,7 @@
       h('div', { className: 'topbar__right' },
         h('button', { className: 'searchbar', type: 'button', onClick: p.onSearch },
           h('span', { className: 'searchbar__icon' }, I.search),
-          h('span', { className: 'searchbar__text' }, 'Search people, requests, policies'),
+          h('span', { className: 'searchbar__text' }, 'Search people, requests, documents'),
           h('span', { className: 'searchbar__kbd' }, 'Ctrl K')),
         h('span', { className: 'bell' },
           h(V.IconButton, {
