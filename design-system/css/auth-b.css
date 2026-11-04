@@ -6,9 +6,33 @@
 :root {
   --authb-wash: #f1edfb; --authb-wash-2: #e9e3f8;
   --authb-card: #ffffff; --authb-aside: #faf8fe;
+  --authb-wash-a: #dfd4f8; --authb-wash-b: #e7e0fa;
+  --authb-wash-c: #d9ccf6; --authb-wash-d: #e6dff9; --authb-wash-e: #eae4fb;
+  --authb-wave: #ffffff;
+  --authb-aside-glow: #d9cefa66;
+  --authb-shadow: 0 2px 6px #2a1a5e0f, 0 24px 60px -12px #2a1a5e24;
 }
-:root[data-theme="dark"], :root:not([data-theme="light"]) {
-  color-scheme: light only;
+/* Dark: the same tokens, deeper. The page follows the theme instead of being pinned to
+   light, so its text and fields (which use theme tokens) stay readable. */
+:root[data-theme="dark"] {
+  --authb-wash: #14111f; --authb-wash-2: #14111f;
+  --authb-card: #1c1829; --authb-aside: #231e36;
+  --authb-wash-a: #1f1936; --authb-wash-b: #1a1530;
+  --authb-wash-c: #1d1733; --authb-wash-d: #181330; --authb-wash-e: #171229;
+  --authb-wave: #8f78e6;
+  --authb-aside-glow: #5b46a933;
+  --authb-shadow: 0 2px 6px #00000066, 0 24px 60px -12px #00000099;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --authb-wash: #14111f; --authb-wash-2: #14111f;
+    --authb-card: #1c1829; --authb-aside: #231e36;
+    --authb-wash-a: #1f1936; --authb-wash-b: #1a1530;
+    --authb-wash-c: #1d1733; --authb-wash-d: #181330; --authb-wash-e: #171229;
+    --authb-wave: #8f78e6;
+    --authb-aside-glow: #5b46a933;
+    --authb-shadow: 0 2px 6px #00000066, 0 24px 60px -12px #00000099;
+  }
 }
 
 .authb {
@@ -25,14 +49,14 @@
   overflow: hidden;
   /* Washes rather than shapes: no edge can show where a gradient fades out */
   background:
-    radial-gradient(1100px 620px at 102% -8%, #dfd4f8 0%, #e7e0fa 38%, transparent 68%),
-    radial-gradient(1000px 560px at 108% 106%, #d9ccf6 0%, #e6dff9 40%, transparent 70%),
-    radial-gradient(760px 520px at -8% 96%, #eae4fb 0%, transparent 62%),
+    radial-gradient(1100px 620px at 102% -8%, var(--authb-wash-a) 0%, var(--authb-wash-b) 38%, transparent 68%),
+    radial-gradient(1000px 560px at 108% 106%, var(--authb-wash-c) 0%, var(--authb-wash-d) 40%, transparent 70%),
+    radial-gradient(760px 520px at -8% 96%, var(--authb-wash-e) 0%, transparent 62%),
     var(--authb-wash);
 }
 /* Two ribbons over the wash, stroked only, so they read as curves and never as blocks */
 .authb__waves { position: absolute; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
-.authb__waves svg { position: absolute; width: 150%; height: auto; stroke: #ffffff; fill: none; opacity: .75; }
+.authb__waves svg { position: absolute; width: 150%; height: auto; stroke: var(--authb-wave); fill: none; opacity: .75; }
 .authb__waves svg:first-child { top: -6%; right: -30%; }
 .authb__waves svg:last-child { bottom: -8%; right: -24%; opacity: .6; }
 
@@ -46,7 +70,7 @@
   place-self: center; width: min(1060px, 100%); max-height: 100%;
   display: grid; grid-template-columns: minmax(0, 0.84fr) minmax(0, 1fr);
   background: var(--authb-card); border-radius: 28px; overflow: hidden;
-  box-shadow: 0 2px 6px #2a1a5e0f, 0 24px 60px -12px #2a1a5e24;
+  box-shadow: var(--authb-shadow);
 }
 
 /* Left: the pitch, a glass illustration, and what people do here. It is an inset panel,
@@ -59,7 +83,7 @@
 }
 .authb__aside::after {
   content: ""; position: absolute; inset: auto 0 0 0; height: 56%; pointer-events: none;
-  background: radial-gradient(120% 90% at 25% 100%, #d9cefa66, transparent 72%);
+  background: radial-gradient(120% 90% at 25% 100%, var(--authb-aside-glow), transparent 72%);
 }
 .authb__h { font-family: var(--font-flex); font-size: clamp(27px, 2.5vw, 33px); line-height: 1.22; font-weight: 600; color: var(--text-primary); }
 .authb__h em { font-style: normal; color: var(--brand-solid); }

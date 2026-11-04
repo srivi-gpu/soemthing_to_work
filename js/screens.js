@@ -670,14 +670,6 @@
       setTimeout(function () { router.go(toSetup ? 'global/setup' : activeRole.home); }, 420);
     }
 
-    function pickRole(id) {
-      roleSt[1](id);
-      var r = roles.filter(function (x) { return x.id === id; })[0];
-      var p = r && who(r.persona);
-      if (p) { emailSt[1](p.workEmail); idErr[1](null); }
-      alertSt[1](null);
-    }
-
     function switchMode(m) { modeSt[1](m); idErr[1](null); alertSt[1](null); }
 
     function submit(e) {
@@ -771,21 +763,7 @@
               'aria-label': mobile ? 'Send a one-time code by SMS' : 'Email me a one-time code'
             }, h('span', { className: 'auth-sso__mark' }, mobile ? PHONE : I.mail))),
 
-          /* Prototype only: which of the three workspaces this sign-in opens. */
           h('div', { className: 'authrole' },
-            h('span', { className: 'authrole__cap' }, 'Prototype — open as'),
-            h('div', { className: 'authrole__row', role: 'group', 'aria-label': 'Workspace to open' },
-              roles.map(function (r) {
-                var p = who(r.persona);
-                return h('button', {
-                  key: r.id, type: 'button', className: 'authrole__btn' + (roleSt[0] === r.id ? ' is-on' : ''),
-                  'aria-pressed': roleSt[0] === r.id ? 'true' : 'false', onClick: function () { pickRole(r.id); }
-                },
-                  h('span', { className: 'authrole__ico' }, I[r.icon] || I.person),
-                  h('span', { className: 'authrole__txt' },
-                    h('strong', null, r.label),
-                    h('small', null, p ? p.name : r.persona)));
-              })),
             h('p', { className: 'auth-switch' }, 'Any password signs you in. New here? Your HR team sends you an invite.'),
             /* Signing up is the one path with no organisation behind it yet, so it marks
                setup as outstanding and the console sends you to the wizard. */
