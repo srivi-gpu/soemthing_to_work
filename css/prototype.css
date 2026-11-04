@@ -448,36 +448,8 @@
    frame it with the page padding it adds to the simpler auth screens. */
 .authpage:has(.authb) { padding: 0; }
 
-/* Which workspace the prototype opens in. Three tiles under the SSO row: this is the
-   only place the role is chosen before the shell appears. */
-/* The picker is the app's own addition to the design system's sign-in card, so it gives
-   up its share of the height too — the card has to fit the viewport without the page
-   scrolling, and three tiles plus a caption is the tallest block the app puts in there. */
+/* The small print under the sign-in form: the any-password note and the sign-up link. */
 .authrole { display: grid; gap: clamp(5px, 1vh, 8px); }
-.authrole__cap {
-  font-size: 11px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase;
-  color: var(--text-muted);
-}
-.authrole__row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: clamp(5px, 1vh, 8px); }
-.authrole__btn {
-  display: flex; align-items: center; gap: 8px; min-width: 0; padding: clamp(6px, 1.1vh, 9px) 10px;
-  border: 1px solid var(--border-default); border-radius: var(--tl-radius-field);
-  background: var(--bg-surface); cursor: pointer; text-align: left;
-  transition: border-color .15s ease, background .15s ease;
-}
-.authrole__btn:hover { background: var(--bg-hover); border-color: var(--border-strong); }
-.authrole__btn.is-on { background: var(--brand-soft); border-color: var(--brand-border); }
-.authrole__btn:focus-visible { outline: 2px solid var(--brand-solid); outline-offset: 2px; }
-.authrole__ico { display: grid; place-items: center; color: var(--text-secondary); flex: none; }
-.authrole__ico svg { width: 18px; height: 18px; }
-.authrole__btn.is-on .authrole__ico { color: var(--text-brand); }
-.authrole__txt { display: grid; min-width: 0; }
-.authrole__txt strong { font-size: 13px; font-weight: 500; color: var(--text-primary); }
-.authrole__txt small {
-  font-size: 11px; color: var(--text-muted);
-  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-}
-.authrole__btn.is-on .authrole__txt strong { color: var(--text-brand); }
 
 @media (max-width: 640px) {
   .authrole__row { grid-template-columns: 1fr; }
