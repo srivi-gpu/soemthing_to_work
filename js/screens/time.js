@@ -676,18 +676,23 @@
   /* ============================================================ Leave requests
      PRD 4.14 and 16.4: approve or reject, with a mandatory reason on rejection. */
   function LeaveRequests() {
-    var tabSt = React.useState('pending');
+    var statusSt = React.useState('pending');
     var typeSt = React.useState(''), deptSt = React.useState('');
     var rejectSt = React.useState(null);
     var reasonSt = React.useState('');
     var openSt = React.useState(null);
 
     var all = store.collection('leaveRequests');
-    var pending = all.filter(function (l) { return l.status === 'Pending Approval'; });
-    var rows = tabSt[0] === 'pending' ? pending
-      : tabSt[0] === 'approved' ? all.filter(function (l) { return l.status === 'Approved'; })
-        : tabSt[0] === 'rejected' ? all.filter(function (l) { return l.status === 'Rejected' || l.status === 'Cancelled'; })
-          : all;
+    /* Status is a filter, not a tab row: it sits with Leave type and Department. */
+    var STATUS = [
+      { value: 'pending', label: 'Pending', is: 'Pending Approval' },
+      { value: 'approved', label: 'Approved', is: 'Approved' },
+      { value: 'rejected', label: 'Rejected', is: 'Rejected' },
+      { value: 'cancelled', label: 'Cancelled', is: 'Cancelled' }
+    ];
+    function countOf(st) { return all.filter(function (l) { return l.status === st.is; }).length; }
+    var picked = STATUS.filter(function (st) { return st.value === statusSt[0]; })[0];
+    var rows = picked ? all.filter(function (l) { return l.status === picked.is; }) : all;
     if (typeSt[0]) rows = rows.filter(function (l) { return l.type === typeSt[0]; });
     if (deptSt[0]) rows = rows.filter(function (l) { var e = emp(l.employee); return e && e.department === deptSt[0]; });
 
@@ -729,16 +734,6 @@
     ];
 
     return h(React.Fragment, null,
-      h(V.TabGroup, {
-        value: tabSt[0], onChange: tabSt[1],
-        items: [
-          { value: 'pending', label: 'Pending', count: pending.length },
-          { value: 'approved', label: 'Approved', count: all.filter(function (l) { return l.status === 'Approved'; }).length },
-          { value: 'rejected', label: 'Rejected & cancelled', count: all.filter(function (l) { return l.status === 'Rejected' || l.status === 'Cancelled'; }).length },
-          { value: 'all', label: 'All', count: all.length }
-        ]
-      }),
-
       h(Card, {
         title: 'Leave requests',
         description: 'Approving updates the balance, the attendance calendar and payroll inputs, as PRD 5.1 requires.'
@@ -748,14 +743,17 @@
           search: function (l) { return [l.id, empName(l.employee), typeName(l.type), l.reason, l.status].join(' '); },
           searchPlaceholder: 'Search by request, employee or type',
           filters: h(React.Fragment, null,
+            h(ui.Filter, { label: 'Status', value: statusSt[0], onChange: statusSt[1],
+              options: STATUS.map(function (st) { return { value: st.value, label: st.label + ' (' + countOf(st) + ')' }; }),
+              allLabel: 'All (' + all.length + ')' }),
             h(ui.Filter, { label: 'Leave type', value: typeSt[0], onChange: typeSt[1], options: leaveTypeOptions() }),
             h(ui.Filter, { label: 'Department', value: deptSt[0], onChange: deptSt[1], options: deptOptions() })),
           columns: columns,
-          emptyIcon: tabSt[0] === 'pending' ? I.ok : I.calendar,
-          emptyTitle: tabSt[0] === 'pending' ? 'Nothing waiting for a decision' : 'No requests match this view',
-          emptyBody: tabSt[0] === 'pending'
+          emptyIcon: statusSt[0] === 'pending' ? I.ok : I.calendar,
+          emptyTitle: statusSt[0] === 'pending' ? 'Nothing waiting for a decision' : 'No requests match this view',
+          emptyBody: statusSt[0] === 'pending'
             ? 'Every leave request has been actioned.'
-            : 'Adjust the filters, or choose another tab.'
+            : 'Adjust the filters, or choose another status.'
         })),
 
       /* PRD 4.13: a rejection needs a reason, and the requester sees it. */

@@ -195,9 +195,21 @@
     });
     var currentMaster = item.tabs.filter(function (t) { return t.group === activeTab.group; })[0].path;
 
+    /* One row: the screens of the group you are in on the left (underlined, as every
+       other module's tabs are), the Attendance | Leave switch on the right. The hairline
+       belongs to the row, so it runs under the whole width rather than under the tabs. */
     return h('div', { className: 'mtabs' },
-      row(masters, 'underline', currentMaster, item.label),
-      row(inGroup, 'pill', active, activeTab.group));
+      h('div', { className: 'mtabs__row' },
+        h('div', { className: 'mtabs__tabs' }, h(V.TabGroup, {
+          variant: 'underline', divider: false, 'aria-label': activeTab.group, value: active,
+          items: inGroup.map(function (t) { return { value: t.path, label: t.label }; }),
+          onChange: function (v) { go(inGroup.filter(function (t) { return t.path === v; })[0]); }
+        })),
+        h('div', { className: 'mtabs__switch' }, h(V.SegmentedControl, {
+          'aria-label': item.label, value: currentMaster,
+          items: masters.map(function (m) { return { value: m.path, label: m.label }; }),
+          onChange: function (v) { go(masters.filter(function (m) { return m.path === v; })[0]); }
+        }))));
   }
 
   /* ---------- Toasts: app-level, so an action can report from anywhere ---------- */

@@ -747,12 +747,26 @@
 .dstrip__ki i.is-none { background: var(--bg-subtle); border-color: var(--border-subtle); }
 
 /* ------------------------------------------------- Two-tier module tabs
-   A module that gathers two subjects shows them as a master row with the tabs of the
-   selected one beneath. The master row is underlined, as every other module's single
-   row is, so the hierarchy reads top-down: the familiar control names the half you are
-   in, and the pills below are the screens within it. */
-.mtabs { display: grid; gap: 10px; margin-bottom: 4px; }
-.mtabs > .vi-tabs--pill { padding-left: 2px; }
+   A module that gathers two subjects (Attendance | Leave) shows them as a segmented
+   switch at the right of the tab row; the tabs of the selected one sit on the left,
+   underlined. The row owns the hairline and the selected bar overlaps it. */
+.mtabs { margin-bottom: 4px; }
+.mtabs__row { display: flex; align-items: center; justify-content: space-between; gap: 16px; border-bottom: 1px solid var(--border-subtle); }
+.mtabs__tabs { min-width: 0; margin-bottom: -1px; }
+.mtabs__switch { flex: none; padding-bottom: 6px; }
+.mtabs__switch .vi-seg { border-radius: 999px; background: var(--bg-subtle); }
+.mtabs__switch .vi-seg__item { border-radius: 999px; padding-inline: 18px; }
+.mtabs__switch .vi-seg__item.is-selected,
+.mtabs__switch .vi-seg__item[aria-checked="true"] { background: var(--bg-surface); color: var(--text-brand); }
+.mtabs .vi-tab { height: 44px; padding: 0 16px; font-size: 15px; }
+.mtabs .vi-tab.is-selected { color: var(--text-brand); }
+.mtabs .vi-tab--underline::after { height: 3px; border-radius: 3px 3px 0 0; }
+.mtabs .vi-tab--underline.is-selected::after { height: 3px; background: var(--brand-solid); border-radius: 3px 3px 0 0; }
+@media (max-width: 720px) {
+  .mtabs__row { flex-direction: column; align-items: stretch; gap: 10px; }
+  .mtabs__switch { order: -1; padding-bottom: 0; align-self: flex-start; }
+  .mtabs__tabs { overflow-x: auto; }
+}
 
 /* ======================================================= Performance standings
    Badges, the board and the reward catalogue. The plate colours are the badge
